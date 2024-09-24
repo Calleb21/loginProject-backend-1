@@ -2,16 +2,20 @@ package br.com.login_project.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "TB_USUARIO")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Usuario {
+public class Usuarios {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "usuario_seq")
@@ -31,35 +35,4 @@ public class Usuario {
     @Pattern(regexp = ".*[!@#$%^&*].*", message = "Password must contain at least one special character")
     private String senha;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getNomeCompleto() {
-        return nomeCompleto;
-    }
-
-    public void setNomeCompleto(String nomeCompleto) {
-        this.nomeCompleto = nomeCompleto;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
 }
