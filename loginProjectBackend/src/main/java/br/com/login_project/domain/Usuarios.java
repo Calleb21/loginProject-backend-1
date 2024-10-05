@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -29,10 +30,22 @@ public class Usuarios {
     private String email;
 
     @Column(name = "SENHA", nullable = false)
-    @Size(min = 11, max = 15, message = "Password must be between 11 and 15 characters long")
-    @Pattern(regexp = ".*[A-Z].*", message = "Password must contain at least one uppercase letter")
-    @Pattern(regexp = ".*[0-9].*", message = "Password must contain at least one number")
-    @Pattern(regexp = ".*[!@#$%^&*].*", message = "Password must contain at least one special character")
+    @Size(min = 11, max = 15, message = "A senha deve ter entre 11 e 15 caracteres")
+    @Pattern(regexp = ".*[A-Z].*", message = "A senha deve conter ao menos uma letra maiúscula")
+    @Pattern(regexp = ".*[0-9].*", message = "A senha deve conter ao menos um número")
+    @Pattern(regexp = ".*[!@#$%^&*].*", message = "A senha deve conter ao menos um caractere especial")
     private String senha;
 
+    @Column(name = "TENTATIVAS_LOGIN", nullable = false)
+    private int tentativasLogin;
+
+    @Column(name = "BLOQUEADO_AT", nullable = true)
+    private LocalDateTime bloqueadoAt;
+
+    public boolean isBloqueado() {
+        if (bloqueadoAt != null) {
+            return LocalDateTime.now().isBefore(bloqueadoAt.plusMinutes(5));
+        }
+        return false;
+    }
 }

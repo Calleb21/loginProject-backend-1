@@ -1,5 +1,6 @@
 package br.com.login_project.dto;
 
+import anotacao.SenhasIguais;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+@SenhasIguais(message = "A senha e a confirmação de senha devem ser iguais")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -33,5 +35,12 @@ public class UsuarioDTO {
     private String senha;
 
     @NotBlank(message = "Confirmação de senha é obrigatória")
+    @Size(min = 11, max = 15, message = "Confirmação de senha deve ter entre 11 e 15 caracteres")
     private String confirmacaoSenha;
+
+    private int tentativasLogin;
+    private boolean bloqueado;
+
+    public UsuarioDTO(Long id, String nomeCompleto, String email, Object o, Object o1) {
+    }
 }

@@ -36,11 +36,15 @@ public class UsuarioController {
 
     // Rota de Login
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestParam String email, @RequestParam String senha) {
-        Optional<Usuarios> usuarios = usuarioService.login(email, senha);
-        if (usuarios.isPresent()) {
-            return ResponseEntity.ok().build();
+    public ResponseEntity<String> login(@RequestParam String email, @RequestParam String senha) {
+        try {
+            Optional<Usuarios> usuarios = usuarioService.login(email, senha);
+            if (usuarios.isPresent()) {
+                return ResponseEntity.ok("Login realizado com sucesso.");
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
