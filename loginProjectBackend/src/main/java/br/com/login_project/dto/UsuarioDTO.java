@@ -13,7 +13,6 @@ import javax.validation.constraints.Size;
 @SenhasIguais(message = "A senha e a confirmação de senha devem ser iguais")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class UsuarioDTO {
 
     private Long id;
@@ -40,6 +39,14 @@ public class UsuarioDTO {
 
     private int tentativasLogin;
     private boolean bloqueado;
+
+    public UsuarioDTO(Long id, String nomeCompleto, String email, String senha, String confirmacaoSenha) {
+        this.id = id;
+        this.nomeCompleto = nomeCompleto;
+        this.email = email;
+        this.senha = senha;
+        this.confirmacaoSenha = confirmacaoSenha;
+    }
 
     public UsuarioDTO(Long id, String nomeCompleto, String email, Object o, Object o1) {
     }
