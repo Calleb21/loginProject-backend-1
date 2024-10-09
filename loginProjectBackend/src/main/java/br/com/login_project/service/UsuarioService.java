@@ -21,7 +21,7 @@ public class UsuarioService {
     private static final int BLOQUEIO_MINUTOS = 5;
 
     private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
-    private static final long BLOQUEIO_MINUTAS = 5 ;
+    private static final long BLOQUEIO_MINUTAS = 5;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -29,15 +29,21 @@ public class UsuarioService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    // Registro de novo usuário
     public UsuarioDTO registrarUsuario(UsuarioDTO usuarioDTO) {
+        // Verificar se o email já está registrado
         if (usuarioRepository.findByEmail(usuarioDTO.getEmail()).isPresent()) {
             throw new EmailJaRegistradoException("Email já está registrado");
+        }
+
+        // Verificação de senha e confirmação de senha
+        if (usuarioDTO.getSenha() == null || usuarioDTO.getConfirmacaoSenha() == null) {
+            throw new SenhasNaoCoincidemException("Senha ou confirmação de senha é nula");
         }
         if (!usuarioDTO.getSenha().equals(usuarioDTO.getConfirmacaoSenha())) {
             throw new SenhasNaoCoincidemException("As senhas não coincidem");
         }
 
+        // Restante do método
         Usuarios usuario = new Usuarios();
         usuario.setNomeCompleto(usuarioDTO.getNomeCompleto());
         usuario.setEmail(usuarioDTO.getEmail());
@@ -73,7 +79,7 @@ public class UsuarioService {
         }
 
         Usuarios usuario = usuarioOpt.get();
-        verificarBloqueio(usuario);
+        verificarBloqueio(usuario); // Verificar bloqueio antes de processar o login
 
         // Verificar se a senha está correta
         if (!passwordEncoder.matches(senha, usuario.getSenha())) {
@@ -84,18 +90,17 @@ public class UsuarioService {
             // Verificar se excedeu o limite de tentativas
             if (usuario.getTentativasLogin() >= MAX_TENTATIVAS) {
                 usuario.setBloqueadoAt(LocalDateTime.now());
-                usuarioRepository.save(usuario);
-                throw new ContaBloqueadaException("Conta bloqueada por 5 minutos devido a muitas tentativas de login incorretas.");
+                logger.warn("Conta bloqueada para o usuário: {}", email);
             }
 
-            usuarioRepository.save(usuario);
+            usuarioRepository.save(usuario); // Salva o estado do usuário após falha de login
             return Optional.empty(); // Senha incorreta
         }
 
         // Login bem-sucedido: resetar tentativas de login
         usuario.setTentativasLogin(0);
         usuario.setBloqueadoAt(null);
-        usuarioRepository.save(usuario);
+        usuarioRepository.save(usuario); // Salva o estado do usuário após sucesso de login
         logger.info("Login bem-sucedido para o usuário: {}", email);
         return Optional.of(usuario); // Login bem-sucedido
     }
@@ -110,7 +115,7 @@ public class UsuarioService {
                 // Desbloquear o usuário após o período
                 usuario.setBloqueadoAt(null);
                 usuario.setTentativasLogin(0);
-                usuarioRepository.save(usuario);
+                usuarioRepository.save(usuario); // Salva o estado do usuário após desbloqueio
             }
         }
     }
