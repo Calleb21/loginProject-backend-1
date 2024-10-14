@@ -17,11 +17,11 @@ import java.util.Optional;
 @Service
 public class UsuarioService {
 
-    private static final int MAX_TENTATIVAS = 5;
+    public static final int MAX_TENTATIVAS = 5;
     private static final int BLOQUEIO_MINUTOS = 5;
 
     private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
-    private static final long BLOQUEIO_MINUTAS = 5;
+    public static final long BLOQUEIO_MINUTAS = 5;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -105,12 +105,12 @@ public class UsuarioService {
         return Optional.of(usuario); // Login bem-sucedido
     }
 
-    private void verificarBloqueio(Usuarios usuario) {
+    public void verificarBloqueio(Usuarios usuario) {
         if (usuario.getBloqueadoAt() != null) {
             LocalDateTime now = LocalDateTime.now();
             long minutosBloqueio = ChronoUnit.MINUTES.between(usuario.getBloqueadoAt(), now);
             if (minutosBloqueio < BLOQUEIO_MINUTAS) {
-                throw new IllegalStateException("Conta bloqueada. Tente novamente após " + (BLOQUEIO_MINUTAS - minutosBloqueio) + " minutos.");
+                throw new ContaBloqueadaException("Conta bloqueada. Tente novamente após " + (BLOQUEIO_MINUTAS - minutosBloqueio) + " minutos.");
             } else {
                 // Desbloquear o usuário após o período
                 usuario.setBloqueadoAt(null);

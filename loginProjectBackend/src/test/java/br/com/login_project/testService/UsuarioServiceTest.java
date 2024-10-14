@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static br.com.login_project.service.UsuarioService.BLOQUEIO_MINUTAS;
+import static br.com.login_project.service.UsuarioService.MAX_TENTATIVAS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -148,35 +150,37 @@ class UsuarioServiceTest {
         assertTrue(result.isEmpty());
         verify(usuarioRepository).save(usuarios);
     }
-/*
+
     @Test
-    void login_BloqueioPorTentativasExcedidas() {
+    void login_ExcedeuTentativasBloqueio() {
+        // Configurar o usuário com tentativas de login próximas ao limite
+        usuarios.setTentativasLogin(MAX_TENTATIVAS - 1);
         when(usuarioRepository.findByEmail(usuarioDTO.getEmail())).thenReturn(Optional.of(usuarios));
+        when(passwordEncoder.matches(usuarioDTO.getSenha(), usuarios.getSenha())).thenReturn(false); // Senha incorreta
 
-        // Simulando 4 tentativas de login incorretas
-        for (int i = 0; i < 4; i++) {
-            when(passwordEncoder.matches(usuarioDTO.getSenha(), usuarios.getSenha())).thenReturn(false);
-            assertDoesNotThrow(() -> usuarioService.login(usuarioDTO.getEmail(), "senhaErrada"));
-        }
+        // Executar o login
+        Optional<Usuarios> result = usuarioService.login(usuarioDTO.getEmail(), usuarioDTO.getSenha());
 
-        // Na quinta tentativa, a conta deve ser bloqueada
-        when(passwordEncoder.matches(usuarioDTO.getSenha(), usuarios.getSenha())).thenReturn(false);
-
-        assertThrows(ContaBloqueadaException.class, () -> usuarioService.login(usuarioDTO.getEmail(), "senhaErrada"));
+        // Verificar se a conta foi bloqueada
+        assertTrue(result.isEmpty());
+        assertEquals(MAX_TENTATIVAS, usuarios.getTentativasLogin());
+        assertNotNull(usuarios.getBloqueadoAt()); // Conta bloqueada
         verify(usuarioRepository).save(usuarios);
     }
 
     @Test
-    void verificarBloqueio_DesbloqueioAutomatico() {
-        usuarios.setTentativasLogin(5);
-        usuarios.setBloqueadoAt(LocalDateTime.now().minusMinutes(6));
+    void verificarBloqueio_DesbloqueioAposPeriodo() {
+        // Configurar o usuário bloqueado, mas com o período de bloqueio expirado
+        LocalDateTime bloqueadoAt = LocalDateTime.now().minusMinutes(BLOQUEIO_MINUTAS + 1); // Tempo maior que o período de bloqueio
+        usuarios.setBloqueadoAt(bloqueadoAt);
+        usuarios.setTentativasLogin(MAX_TENTATIVAS);
 
-        when(usuarioRepository.findByEmail(usuarioDTO.getEmail())).thenReturn(Optional.of(usuarios));
+        // Executar a verificação de bloqueio
+        usuarioService.verificarBloqueio(usuarios);
 
-        assertDoesNotThrow(() -> usuarioService.login(usuarioDTO.getEmail(), usuarioDTO.getSenha()));
-
-        assertNull(usuarios.getBloqueadoAt());
-        assertEquals(0, usuarios.getTentativasLogin());
-        verify(usuarioRepository).save(usuarios);
-    } */
+        // Verificar se o usuário foi desbloqueado
+        assertNull(usuarios.getBloqueadoAt()); // Verifica se o bloqueio foi removido
+        assertEquals(0, usuarios.getTentativasLogin()); // Verifica se as tentativas foram resetadas
+        verify(usuarioRepository).save(usuarios); // Verifica se o estado foi salvo
+    }
 }

@@ -2,13 +2,13 @@ package br.com.login_project.dto;
 
 import anotacao.SenhasIguais;
 
+import jakarta.persistence.PrePersist;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 
 @SenhasIguais(message = "A senha e a confirmação de senha devem ser iguais")
@@ -50,5 +50,16 @@ public class UsuarioDTO {
     }
 
     public UsuarioDTO(Long id, String nomeCompleto, String email, Object o, Object o1) {
+    }
+
+    // Adicione um método que remove espaços em branco antes de fazer a validação
+    @PrePersist
+    public void trimFields() {
+        if (senha != null) {
+            senha = senha.trim();
+        }
+        if (confirmacaoSenha != null) {
+            confirmacaoSenha = confirmacaoSenha.trim();
+        }
     }
 }
