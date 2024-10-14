@@ -1,14 +1,15 @@
 package br.com.login_project.dto;
 
 import anotacao.SenhasIguais;
-import lombok.AllArgsConstructor;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+
 
 @SenhasIguais(message = "A senha e a confirmação de senha devem ser iguais")
 @Data

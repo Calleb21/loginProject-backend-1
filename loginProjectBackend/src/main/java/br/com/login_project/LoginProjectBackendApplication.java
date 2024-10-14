@@ -8,7 +8,6 @@ public class LoginProjectBackendApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(LoginProjectBackendApplication.class, args);
-
-
+		
 	}
 }

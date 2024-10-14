@@ -178,7 +178,5 @@ class UsuarioServiceTest {
         assertNull(usuarios.getBloqueadoAt());
         assertEquals(0, usuarios.getTentativasLogin());
         verify(usuarioRepository).save(usuarios);
-    }
-
- */
+    } */
 }

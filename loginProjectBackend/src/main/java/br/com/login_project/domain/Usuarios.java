@@ -1,13 +1,14 @@
 package br.com.login_project.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 
 @Setter
