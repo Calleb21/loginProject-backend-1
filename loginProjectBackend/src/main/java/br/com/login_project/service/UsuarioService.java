@@ -4,6 +4,7 @@ import br.com.login_project.domain.Usuarios;
 import br.com.login_project.dto.UsuarioDTO;
 import br.com.login_project.exception.*;
 import br.com.login_project.repository.UsuarioRepository;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,6 @@ public class UsuarioService {
     private static final int BLOQUEIO_MINUTOS = 5;
 
     private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
-    private static final long BLOQUEIO_MINUTAS = 5;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -30,20 +30,10 @@ public class UsuarioService {
     private BCryptPasswordEncoder passwordEncoder;
 
     public UsuarioDTO registrarUsuario(UsuarioDTO usuarioDTO) {
-        // Verificar se o email já está registrado
         if (usuarioRepository.findByEmail(usuarioDTO.getEmail()).isPresent()) {
             throw new EmailJaRegistradoException("Email já está registrado");
         }
 
-        // Verificação de senha e confirmação de senha
-        if (usuarioDTO.getSenha() == null || usuarioDTO.getConfirmacaoSenha() == null) {
-            throw new SenhasNaoCoincidemException("Senha ou confirmação de senha é nula");
-        }
-        if (!usuarioDTO.getSenha().equals(usuarioDTO.getConfirmacaoSenha())) {
-            throw new SenhasNaoCoincidemException("As senhas não coincidem");
-        }
-
-        // Restante do método
         Usuarios usuario = new Usuarios();
         usuario.setNomeCompleto(usuarioDTO.getNomeCompleto());
         usuario.setEmail(usuarioDTO.getEmail());
@@ -51,8 +41,15 @@ public class UsuarioService {
         usuario.setTentativasLogin(0);
         usuario.setBloqueadoAt(null);
 
-        Usuarios novoUsuario = usuarioRepository.save(usuario);
-        return new UsuarioDTO(novoUsuario.getId(), novoUsuario.getNomeCompleto(), novoUsuario.getEmail(), null, null);
+        try {
+            Usuarios novoUsuario = usuarioRepository.save(usuario);
+            return new UsuarioDTO(novoUsuario.getId(), novoUsuario.getNomeCompleto(), novoUsuario.getEmail(), null, null);
+        } catch (ConstraintViolationException e) {
+            e.getConstraintViolations().forEach(violation -> {
+                logger.error("Erro de validação: {}", violation.getMessage());
+            });
+            throw e; // Re-throw para manuseio posterior
+        }
     }
 
     public void alterarSenha(String nomeCompleto, String email, String novaSenha, String confirmacaoSenha) {
@@ -71,52 +68,47 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
-    // Método de login
     public Optional<Usuarios> login(String email, String senha) {
         Optional<Usuarios> usuarioOpt = usuarioRepository.findByEmail(email);
         if (usuarioOpt.isEmpty()) {
-            return Optional.empty(); // Usuário não encontrado
+            return Optional.empty();
         }
 
         Usuarios usuario = usuarioOpt.get();
-        verificarBloqueio(usuario); // Verificar bloqueio antes de processar o login
+        verificarBloqueio(usuario);
 
-        // Verificar se a senha está correta
         if (!passwordEncoder.matches(senha, usuario.getSenha())) {
-            // Incrementar tentativas de login
-            usuario.setTentativasLogin(usuario.getTentativasLogin() + 1);
-            logger.warn("Tentativa de login falha para o usuário: {}", email);
-
-            // Verificar se excedeu o limite de tentativas
-            if (usuario.getTentativasLogin() >= MAX_TENTATIVAS) {
-                usuario.setBloqueadoAt(LocalDateTime.now());
-                logger.warn("Conta bloqueada para o usuário: {}", email);
-            }
-
-            usuarioRepository.save(usuario); // Salva o estado do usuário após falha de login
-            return Optional.empty(); // Senha incorreta
+            incrementarTentativas(usuario);
+            return Optional.empty();
         }
 
-        // Login bem-sucedido: resetar tentativas de login
-        usuario.setTentativasLogin(0);
-        usuario.setBloqueadoAt(null);
-        usuarioRepository.save(usuario); // Salva o estado do usuário após sucesso de login
-        logger.info("Login bem-sucedido para o usuário: {}", email);
-        return Optional.of(usuario); // Login bem-sucedido
+        resetarTentativasLogin(usuario);
+        return Optional.of(usuario);
     }
 
     private void verificarBloqueio(Usuarios usuario) {
         if (usuario.getBloqueadoAt() != null) {
-            LocalDateTime now = LocalDateTime.now();
-            long minutosBloqueio = ChronoUnit.MINUTES.between(usuario.getBloqueadoAt(), now);
-            if (minutosBloqueio < BLOQUEIO_MINUTAS) {
-                throw new IllegalStateException("Conta bloqueada. Tente novamente após " + (BLOQUEIO_MINUTAS - minutosBloqueio) + " minutos.");
-            } else {
-                // Desbloquear o usuário após o período
-                usuario.setBloqueadoAt(null);
-                usuario.setTentativasLogin(0);
-                usuarioRepository.save(usuario); // Salva o estado do usuário após desbloqueio
+            long minutosBloqueio = ChronoUnit.MINUTES.between(usuario.getBloqueadoAt(), LocalDateTime.now());
+            if (minutosBloqueio < BLOQUEIO_MINUTOS) {
+                throw new IllegalStateException("Conta bloqueada. Tente novamente após " + (BLOQUEIO_MINUTOS - minutosBloqueio) + " minutos.");
             }
+            resetarTentativasLogin(usuario); // Desbloqueio após o período
         }
+    }
+
+    private void incrementarTentativas(Usuarios usuario) {
+        usuario.setTentativasLogin(usuario.getTentativasLogin() + 1);
+        if (usuario.getTentativasLogin() >= MAX_TENTATIVAS) {
+            usuario.setBloqueadoAt(LocalDateTime.now());
+            logger.warn("Conta bloqueada para o usuário: {}", usuario.getEmail());
+        }
+        usuarioRepository.save(usuario);
+    }
+
+    private void resetarTentativasLogin(Usuarios usuario) {
+        usuario.setTentativasLogin(0);
+        usuario.setBloqueadoAt(null);
+        usuarioRepository.save(usuario);
+        logger.info("Login bem-sucedido para o usuário: {}", usuario.getEmail());
     }
 }

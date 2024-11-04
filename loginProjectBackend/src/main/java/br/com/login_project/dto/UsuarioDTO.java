@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
-
 @SenhasIguais(message = "A senha e a confirmação de senha devem ser iguais")
 @Data
 @NoArgsConstructor
@@ -47,8 +46,5 @@ public class UsuarioDTO {
         this.email = email;
         this.senha = senha;
         this.confirmacaoSenha = confirmacaoSenha;
-    }
-
-    public UsuarioDTO(Long id, String nomeCompleto, String email, Object o, Object o1) {
     }
 }
