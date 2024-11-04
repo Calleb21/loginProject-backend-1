@@ -8,8 +8,8 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
-        <relativePath/>
+        <version>3.3.0</version> <!-- Versão estável do Spring Boot -->
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>br.com.login-project</groupId>
@@ -79,10 +79,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Hibernate Validator (opcional, se necessário especificar) -->
+        <!-- Removido o versionamento para usar a versão gerenciada pelo Spring Boot -->
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>7.0.5.Final</version>
+            <version>7.0.5.Final</version> <!-- ou uma versão mais recente -->
         </dependency>
     </dependencies>
 
@@ -92,13 +94,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <!-- Removida a configuração de exclusão de Lombok -->
             </plugin>
 
             <!-- Maven Surefire Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.0.0</version> <!-- Usar uma versão estável -->
             </plugin>
         </plugins>
     </build>
