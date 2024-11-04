@@ -1,6 +1,7 @@
 package br.com.login_project.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -37,11 +38,17 @@ public class Usuarios {
     @Pattern(regexp = ".*[!@#$%^&*].*", message = "A senha deve conter ao menos um caractere especial")
     private String senha;
 
+    @Column(name = "CONFIRMASENHA", nullable = false)
+    @NotBlank(message = "Confirmação de senha é obrigatória")
+    @Size(min = 11, max = 15, message = "Confirmação de senha deve ter entre 11 e 15 caracteres")
+    private String confirmacaoSenha;
+
     @Column(name = "TENTATIVAS_LOGIN", nullable = false)
     private int tentativasLogin;
 
     @Column(name = "BLOQUEADO_AT", nullable = true)
     private LocalDateTime bloqueadoAt;
+
 
     public boolean isBloqueado() {
         if (bloqueadoAt != null) {
