@@ -37,7 +37,7 @@ class UsuarioServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         usuarioDTO = new UsuarioDTO(1L, "Teste Teste", "teste@example.com", "Asd1234567@", "Asd1234567@");
-        usuarios = new Usuarios(1L, "Teste Teste", "teste@example.com", "$2a$10$hashedPassword", 0, null);
+        usuarios = new Usuarios(1L, "Teste Teste", "teste@example.com", "$2a$10$hashedPassword", "Asd1234567@", 0, null);
     }
 
     @Test
@@ -62,6 +62,7 @@ class UsuarioServiceTest {
 
     @Test
     void registrarUsuario_SenhasNaoCoincidem() {
+        usuarioDTO.setSenha("SenhaOriginal");
         usuarioDTO.setConfirmacaoSenha("SenhaDiferente");
 
         assertThrows(SenhasNaoCoincidemException.class, () -> usuarioService.registrarUsuario(usuarioDTO));
@@ -102,8 +103,7 @@ class UsuarioServiceTest {
 
     @Test
     void registrarUsuario_SenhaNula() {
-        usuarioDTO.setSenha(null);
-        usuarioDTO.setConfirmacaoSenha(null);
+        usuarioDTO = new UsuarioDTO(1L, "Teste Teste", "teste@example.com", null, null);
 
         assertThrows(SenhasNaoCoincidemException.class, () -> usuarioService.registrarUsuario(usuarioDTO));
     }

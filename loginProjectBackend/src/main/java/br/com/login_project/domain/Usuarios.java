@@ -32,16 +32,8 @@ public class Usuarios {
     private String email;
 
     @Column(name = "SENHA", nullable = false)
-    @Size(min = 11, max = 15, message = "A senha deve ter entre 11 e 15 caracteres")
-    @Pattern(regexp = ".*[A-Z].*", message = "A senha deve conter ao menos uma letra maiúscula")
-    @Pattern(regexp = ".*[0-9].*", message = "A senha deve conter ao menos um número")
-    @Pattern(regexp = ".*[!@#$%^&*].*", message = "A senha deve conter ao menos um caractere especial")
     private String senha;
 
-    @Column(name = "CONFIRMASENHA", nullable = false)
-    @NotBlank(message = "Confirmação de senha é obrigatória")
-    @Size(min = 11, max = 15, message = "Confirmação de senha deve ter entre 11 e 15 caracteres")
-    private String confirmacaoSenha;
 
     @Column(name = "TENTATIVAS_LOGIN", nullable = false)
     private int tentativasLogin;

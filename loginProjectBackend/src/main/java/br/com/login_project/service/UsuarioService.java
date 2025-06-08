@@ -34,6 +34,10 @@ public class UsuarioService {
             throw new EmailJaRegistradoException("Email já está registrado");
         }
 
+        if (usuarioDTO.getSenha() == null || usuarioDTO.getConfirmacaoSenha() == null || !usuarioDTO.getSenha().equals(usuarioDTO.getConfirmacaoSenha())) {
+            throw new SenhasNaoCoincidemException("As senhas não coincidem");
+        }
+
         Usuarios usuario = new Usuarios();
         usuario.setNomeCompleto(usuarioDTO.getNomeCompleto());
         usuario.setEmail(usuarioDTO.getEmail());

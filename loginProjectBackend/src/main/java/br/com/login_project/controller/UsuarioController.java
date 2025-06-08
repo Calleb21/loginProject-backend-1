@@ -1,6 +1,8 @@
 package br.com.login_project.controller;
 
+import br.com.login_project.config.JwtUtil;
 import br.com.login_project.domain.Usuarios;
+import br.com.login_project.dto.LoginResponseDTO;
 import br.com.login_project.dto.UsuarioDTO;
 import br.com.login_project.exception.EmailJaRegistradoException;
 import br.com.login_project.exception.SenhasNaoCoincidemException;
@@ -15,11 +17,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/api/usuarios")
+@RequestMapping("/api/usuarios" )
 public class UsuarioController {
 
     @Autowired
     public UsuarioService usuarioService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // Cadastro de novo Usuário
     @PostMapping("/signup")
@@ -53,11 +58,13 @@ public class UsuarioController {
         try {
             Optional<Usuarios> usuarios = usuarioService.login(usuarioDTO.getEmail(), usuarioDTO.getSenha());
             if (usuarios.isPresent()) {
-                return ResponseEntity.ok("Login realizado com sucesso.");
+                String token = jwtUtil.generateToken(usuarios.get());
+                return ResponseEntity.ok(new LoginResponseDTO(token, usuarios.get().getNomeCompleto()));
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas.");
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
+
 }

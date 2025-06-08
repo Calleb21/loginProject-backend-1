@@ -28,10 +28,10 @@ public class UsuarioControllerTest {
     private Usuarios usuarios;
 
     @BeforeEach
-    void setUp() {
+    void setUp( ) {
         MockitoAnnotations.openMocks(this);
         usuarioDTO = new UsuarioDTO(1L, "Teste Teste", "teste@example.com", "Asd1234567@", "Asd1234567@");
-        usuarios = new Usuarios(1L, "Teste Teste", "teste@example.com", "$2a$10$hashedPassword", 0, null);
+        usuarios = new Usuarios(1L, "Teste Teste", "teste@example.com", "$2a$10$hashedPassword", "Asd1234567@", 0, null);
     }
 
     @Test
