@@ -54,9 +54,9 @@ public class UsuarioController {
 
     // Rota de Login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid UsuarioDTO usuarioDTO) {
+    public ResponseEntity<?> login(@RequestBody @Valid LoginResponseDTO loginResponseDTO) {
         try {
-            Optional<Usuarios> usuarios = usuarioService.login(usuarioDTO.getEmail(), usuarioDTO.getSenha());
+            Optional<Usuarios> usuarios = usuarioService.login(loginResponseDTO.getEmail(), loginResponseDTO.getSenha());
             if (usuarios.isPresent()) {
                 String token = jwtUtil.generateToken(usuarios.get());
                 return ResponseEntity.ok(new LoginResponseDTO(token, usuarios.get().getNomeCompleto()));
