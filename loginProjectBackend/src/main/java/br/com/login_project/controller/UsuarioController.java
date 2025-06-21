@@ -6,6 +6,8 @@ import br.com.login_project.dto.LoginResponseDTO;
 import br.com.login_project.dto.UsuarioDTO;
 import br.com.login_project.exception.EmailJaRegistradoException;
 import br.com.login_project.exception.SenhasNaoCoincidemException;
+import br.com.login_project.exception.SenhaNaoPodeSerIgualAnteriorException;
+import br.com.login_project.exception.UsuarioNaoEncontradoException;
 import br.com.login_project.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/api/usuarios" )
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     @Autowired
@@ -33,9 +35,16 @@ public class UsuarioController {
             UsuarioDTO novoUsuario = usuarioService.registrarUsuario(usuarioDTO);
             return new ResponseEntity<>(novoUsuario, HttpStatus.CREATED);
         } catch (EmailJaRegistradoException e) {
-            return new ResponseEntity<>("Email já registrado", HttpStatus.BAD_REQUEST);
+            // Retorna a mensagem específica da exceção para o frontend
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (SenhasNaoCoincidemException e) {
-            return new ResponseEntity<>("As senhas não coincidem", HttpStatus.BAD_REQUEST);
+            // Retorna a mensagem específica da exceção para o frontend
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            // Loga a exceção para depuração no servidor
+            System.err.println("Erro interno ao registrar usuário: " + e.getMessage());
+            // Retorna uma mensagem genérica para outros erros inesperados
+            return new ResponseEntity<>("Erro interno ao registrar usuário", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -44,11 +53,16 @@ public class UsuarioController {
     public ResponseEntity<?> esqueceuSenha(@RequestBody @Valid UsuarioDTO usuarioDTO) {
         try {
             usuarioService.alterarSenha(usuarioDTO.getNomeCompleto(), usuarioDTO.getEmail(), usuarioDTO.getSenha(), usuarioDTO.getConfirmacaoSenha());
-            return ResponseEntity.ok("Senha alterada com sucesso.");
+            return ResponseEntity.ok().build();
         } catch (SenhasNaoCoincidemException e) {
-            return new ResponseEntity<>("As senhas não coincidem", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (SenhaNaoPodeSerIgualAnteriorException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (UsuarioNaoEncontradoException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>("Erro ao alterar senha", HttpStatus.INTERNAL_SERVER_ERROR);
+            System.err.println("Erro interno ao alterar senha: " + e.getMessage());
+            return new ResponseEntity<>("Erro interno ao alterar senha", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -64,7 +78,9 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas.");
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Erro interno no login: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno no servidor ao tentar logar.");
         }
     }
-
 }
