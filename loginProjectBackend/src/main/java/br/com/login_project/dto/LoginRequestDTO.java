@@ -11,7 +11,7 @@ public class LoginRequestDTO {
     @Email(message = "Formato de email inválido")
     private String email;
 
-    @NotBlank(message = "Senha é obrigatória")
+    @NotBlank(message = "Senha é obrigatória.")
     private String senha;
 
 }
