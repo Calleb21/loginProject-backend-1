@@ -6,7 +6,7 @@ import br.com.login_project.dto.LoginRequestDTO;
 import br.com.login_project.dto.LoginResponseDTO;
 import br.com.login_project.dto.ResetPasswordDTO;
 import br.com.login_project.dto.UsuarioDTO;
-import br.com.login_project.exception.*;
+import br.com.login_project.exception.CredenciaisInvalidasException;
 import br.com.login_project.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,8 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -37,35 +35,26 @@ public class UsuarioController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário cadastrado com sucesso",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = "text/plain")),
-            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
+            @ApiResponse(responseCode = "400", description = "Dados inválidos (e.g., e-mail já existe, senhas não coincidem)")
     })
     @PostMapping("/signup")
-    public ResponseEntity<?> registrar(@RequestBody @Valid UsuarioDTO usuarioDTO) {
-        try {
-            UsuarioDTO novoUsuario = usuarioService.registrarUsuario(usuarioDTO);
-            return new ResponseEntity<>(novoUsuario, HttpStatus.CREATED);
-        } catch (EmailJaRegistradoException | SenhasNaoCoincidemException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<UsuarioDTO> registrar(@RequestBody @Valid UsuarioDTO usuarioDTO) {
+        // Lógica de sucesso. Erros são capturados pelo @ControllerAdvice.
+        UsuarioDTO novoUsuario = usuarioService.registrarUsuario(usuarioDTO);
+        return new ResponseEntity<>(novoUsuario, HttpStatus.CREATED);
     }
 
     @Operation(summary = "Altera a senha de um usuário")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Senha alterada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = "text/plain")),
-            @ApiResponse(responseCode = "404", description = "Usuário não encontrado", content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos (e.g., senha igual à anterior)"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
     @PostMapping("/resetPassword")
-    public ResponseEntity<?> esqueceuSenha(@RequestBody @Valid ResetPasswordDTO resetPasswordDTO) {
-        try {
-            usuarioService.alterarSenha(resetPasswordDTO);
-            return ResponseEntity.ok().build();
-        } catch (SenhasNaoCoincidemException | SenhaNaoPodeSerIgualAnteriorException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (UsuarioNaoEncontradoException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<Void> esqueceuSenha(@RequestBody @Valid ResetPasswordDTO resetPasswordDTO) {
+        // Lógica de sucesso. Erros são capturados pelo @ControllerAdvice.
+        usuarioService.alterarSenha(resetPasswordDTO);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Autentica um usuário e retorna um token JWT")
@@ -73,19 +62,15 @@ public class UsuarioController {
             @ApiResponse(responseCode = "200", description = "Login bem-sucedido",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponseDTO.class))),
             @ApiResponse(responseCode = "401", description = "Credenciais inválidas"),
-            @ApiResponse(responseCode = "403", description = "Conta temporariamente bloqueada"),
+            @ApiResponse(responseCode = "403", description = "Conta temporariamente bloqueada")
     })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
-        try {
-            Optional<Usuarios> usuarios = usuarioService.login(loginRequestDTO.getEmail(), loginRequestDTO.getSenha());
-            if (usuarios.isPresent()) {
-                String token = jwtUtil.generateToken(usuarios.get());
-                return ResponseEntity.ok(new LoginResponseDTO(token, usuarios.get().getNomeCompleto()));
-            }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas.");
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) throws CredenciaisInvalidasException {
+        // Lógica de sucesso. A falha no login agora lança uma exceção.
+        Usuarios usuario = usuarioService.login(loginRequestDTO.getEmail(), loginRequestDTO.getSenha())
+                .orElseThrow(() -> new CredenciaisInvalidasException("E-mail ou senha inválidos."));
+
+        String token = jwtUtil.generateToken(usuario);
+        return ResponseEntity.ok(new LoginResponseDTO(token, usuario.getNomeCompleto()));
     }
 }
