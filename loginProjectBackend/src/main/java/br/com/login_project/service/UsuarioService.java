@@ -1,10 +1,10 @@
 package br.com.login_project.service;
 
 import br.com.login_project.domain.Usuarios;
+import br.com.login_project.dto.ResetPasswordDTO;
 import br.com.login_project.dto.UsuarioDTO;
 import br.com.login_project.exception.*;
 import br.com.login_project.repository.UsuarioRepository;
-import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,6 @@ public class UsuarioService {
 
     private static final int MAX_TENTATIVAS = 5;
     private static final int BLOQUEIO_MINUTOS = 5;
-
     private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
     @Autowired
@@ -33,11 +32,6 @@ public class UsuarioService {
         if (usuarioRepository.findByEmail(usuarioDTO.getEmail()).isPresent()) {
             throw new EmailJaRegistradoException("Email já está registrado");
         }
-
-        if (usuarioDTO.getSenha() == null || usuarioDTO.getConfirmacaoSenha() == null || !usuarioDTO.getSenha().equals(usuarioDTO.getConfirmacaoSenha())) {
-            throw new SenhasNaoCoincidemException("As senhas não coincidem");
-        }
-
         Usuarios usuario = new Usuarios();
         usuario.setNomeCompleto(usuarioDTO.getNomeCompleto());
         usuario.setEmail(usuarioDTO.getEmail());
@@ -45,30 +39,22 @@ public class UsuarioService {
         usuario.setTentativasLogin(0);
         usuario.setBloqueadoAt(null);
 
-        try {
-            Usuarios novoUsuario = usuarioRepository.save(usuario);
-            return new UsuarioDTO(novoUsuario.getId(), novoUsuario.getNomeCompleto(), novoUsuario.getEmail(), null, null);
-        } catch (ConstraintViolationException e) {
-            e.getConstraintViolations().forEach(violation -> {
-                logger.error("Erro de validação: {}", violation.getMessage());
-            });
-            throw e; // Re-throw para manuseio posterior
-        }
+        Usuarios novoUsuario = usuarioRepository.save(usuario);
+        UsuarioDTO respostaDTO = new UsuarioDTO();
+        respostaDTO.setNomeCompleto(novoUsuario.getNomeCompleto());
+        respostaDTO.setEmail(novoUsuario.getEmail());
+        return respostaDTO;
     }
 
-    public void alterarSenha(String nomeCompleto, String email, String novaSenha, String confirmacaoSenha) {
-        if (!novaSenha.equals(confirmacaoSenha)) {
-            throw new SenhasNaoCoincidemException("As senhas não coincidem");
-        }
+    public void alterarSenha(ResetPasswordDTO resetPasswordDTO) {
+        Usuarios usuario = usuarioRepository.findByNomeCompletoAndEmail(resetPasswordDTO.getNomeCompleto(), resetPasswordDTO.getEmail())
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com as credenciais fornecidas"));
 
-        Usuarios usuario = usuarioRepository.findByNomeCompletoAndEmail(nomeCompleto, email)
-                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado"));
-
-        if (passwordEncoder.matches(novaSenha, usuario.getSenha())) {
+        if (passwordEncoder.matches(resetPasswordDTO.getNovaSenha(), usuario.getSenha())) {
             throw new SenhaNaoPodeSerIgualAnteriorException("A nova senha não pode ser igual à senha anterior");
         }
 
-        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        usuario.setSenha(passwordEncoder.encode(resetPasswordDTO.getNovaSenha()));
         usuarioRepository.save(usuario);
     }
 
@@ -96,7 +82,8 @@ public class UsuarioService {
             if (minutosBloqueio < BLOQUEIO_MINUTOS) {
                 throw new IllegalStateException("Conta bloqueada. Tente novamente após " + (BLOQUEIO_MINUTOS - minutosBloqueio) + " minutos.");
             }
-            resetarTentativasLogin(usuario); // Desbloqueio após o período
+            // Desbloqueia a conta se o tempo já passou
+            resetarTentativasLogin(usuario);
         }
     }
 
