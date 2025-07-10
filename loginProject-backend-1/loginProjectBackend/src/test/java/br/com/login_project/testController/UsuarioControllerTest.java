@@ -1,4 +1,4 @@
-package br.com.login_project.testController;
+package br.com.login_project.controller;
 
 import br.com.login_project.controller.UsuarioController;
 import br.com.login_project.domain.Usuarios;

@@ -39,7 +39,6 @@ public class UsuarioController {
     })
     @PostMapping("/signup")
     public ResponseEntity<UsuarioDTO> registrar(@RequestBody @Valid UsuarioDTO usuarioDTO) {
-        // Lógica de sucesso. Erros são capturados pelo @ControllerAdvice.
         UsuarioDTO novoUsuario = usuarioService.registrarUsuario(usuarioDTO);
         return new ResponseEntity<>(novoUsuario, HttpStatus.CREATED);
     }
@@ -52,7 +51,6 @@ public class UsuarioController {
     })
     @PostMapping("/resetPassword")
     public ResponseEntity<Void> esqueceuSenha(@RequestBody @Valid ResetPasswordDTO resetPasswordDTO) {
-        // Lógica de sucesso. Erros são capturados pelo @ControllerAdvice.
         usuarioService.alterarSenha(resetPasswordDTO);
         return ResponseEntity.ok().build();
     }
@@ -66,7 +64,6 @@ public class UsuarioController {
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid LoginRequestDTO loginRequestDTO) throws CredenciaisInvalidasException {
-        // Lógica de sucesso. A falha no login agora lança uma exceção.
         Usuarios usuario = usuarioService.login(loginRequestDTO.getEmail(), loginRequestDTO.getSenha())
                 .orElseThrow(() -> new CredenciaisInvalidasException("E-mail ou senha inválidos."));
 

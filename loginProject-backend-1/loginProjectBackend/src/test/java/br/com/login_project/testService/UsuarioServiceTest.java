@@ -1,4 +1,4 @@
-package br.com.login_project.testService;
+package br.com.login_project.service;
 
 import br.com.login_project.domain.Usuarios;
 import br.com.login_project.dto.UsuarioDTO;
