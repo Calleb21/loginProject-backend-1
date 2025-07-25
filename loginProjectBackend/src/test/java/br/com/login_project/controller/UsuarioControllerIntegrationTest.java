@@ -44,7 +44,7 @@ public class UsuarioControllerIntegrationTest {
     void login_ComSenhaInvalida_DeveRetornarUnauthorized() throws Exception {
         LoginRequestDTO loginRequest = new LoginRequestDTO();
         loginRequest.setEmail("camargo12@gmail.com"); // E-mail de um usuário existente
-        loginRequest.setSenha("senha-errada-123");   // Senha заведомо incorreta
+        loginRequest.setSenha("senha-errada-123");   // Senha incorreta
 
         // Act & Assert (Ação e Verificação)
         mockMvc.perform(post("/api/usuarios/login")
